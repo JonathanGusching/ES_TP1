@@ -1,6 +1,7 @@
 import os
 import subprocess as sp
-import matplotlib as plt
+import matplotlib.pyplot as plt
+import re #RegEx
 
 def sim_instructions(file_path, arguments='', options=''):
 	sp.run('sim-profile ' + options  + ' ' + file_path + ' ' + arguments , shell=True)
@@ -11,7 +12,8 @@ def export_arguments(file_path, export_path, argument):
 def export_all_instructions(file_path, export_path):
 	sp.run('grep ' + '\"load   \"' + ' ' + file_path + '>>' + export_path, shell=True)
 	sp.run('grep ' + '\"store   \"' + ' ' + file_path + '>>' + export_path, shell=True)
-	sp.run('grep ' + '\"uncond branch   \"' + ' ' + file_path + '>>' + export_path, shell=True)
+	#uncond est inclu dans cond
+	#sp.run('grep ' + '\"uncond branch   \"' + ' ' + file_path + '>>' + export_path, shell=True)
 	sp.run('grep ' + '\"cond branch   \"' + ' ' + file_path + '>>' + export_path, shell=True)
 	sp.run('grep ' + '\"int computation   \"' + ' ' + file_path + '>>' + export_path, shell=True)
 	sp.run('grep ' + '\"fp computation   \"' + ' ' + file_path + '>>' + export_path, shell=True)
@@ -19,18 +21,90 @@ def export_all_instructions(file_path, export_path):
 
 def clean_file(file_path):
 	f = open(file_path, 'w')
-	f.truncate(0) # need '0' when using r+
+	f.truncate(0)
 	f.close()
 
-OUTPUT_FILE="res.txt"
-EXPORT_FILE="export.txt"
-clean_file(EXPORT_FILE)
+def append_to_file(file_path, to_write):
+	with open(file_path, 'a') as f:
+		f.write(to_write + '\n')
 
-options='-redir:sim ' + ' \"'+OUTPUT_FILE+'\" ' + '-iclass true'
+def file_to_list(file_path):
+	file=open(file_path, 'r')
+	lines=file.read().splitlines()
+	final_res=[]
+	result=[]
+	cpt=0
+	for line in lines:
+		if(line.isnumeric()):
+			cpt=cpt+1
+			final_res.append(result)
+			result=[]
+		else:
+			result.append(re.split(r" {2,}", line))
+	file.close()
+	return final_res
 
-sim_instructions('dijkstra/dijkstra_small.ss', 'input_dat', options)
-#export_arguments("res.txt", "test", '\"load   \"')
-export_all_instructions(OUTPUT_FILE, EXPORT_FILE)
-sim_instructions('blowfish/blowfish/bf.ss', 'e input_small.asc output.out', options)
-#export_arguments("res.txt", "test", '\"load   \"')
-export_all_instructions(OUTPUT_FILE, EXPORT_FILE)
+def main():
+	#Partie 1
+	OUTPUT_FILE="res.txt"
+	EXPORT_FILE="export.txt"
+	clean_file(EXPORT_FILE)
+
+	options='-redir:sim ' + ' \"'+OUTPUT_FILE+'\" ' + '-iclass true'
+
+	''' SIMULER DIJKSTRA '''
+	sim_instructions('dijkstra/dijkstra_small.ss', 'input_dat', options)
+	# Si on voulait n'exporter qu'une seule ligne, par exemple "load   "
+	#export_arguments("res.txt", "test", '\"load   \"')
+	
+	export_all_instructions(OUTPUT_FILE, EXPORT_FILE)
+
+	''' SIMULER BLOWFISH '''
+	sim_instructions('blowfish/blowfish/bf.ss', 'e input_small.asc output.out', options)
+	
+	#export_arguments("res.txt", "test", '\"load   \"')
+
+	append_to_file(EXPORT_FILE, '1') # pour séparer les résultats entre eux
+	
+	export_all_instructions(OUTPUT_FILE, EXPORT_FILE)
+	append_to_file(EXPORT_FILE, '2')
+
+	list=file_to_list(EXPORT_FILE)
+	#print(list)
+
+	#Formattage pour affichage (peut sans doute être amélioré)
+	val=[]
+	row=[]
+
+	val2=[]
+	row2=[]
+	for i in range(len(list[0])):
+		val.append( [list[0][i][1],list[0][i][2]])
+		row.append(list[0][i][0])
+
+	for i in range(len(list[1])):
+		val2.append( [list[1][i][1],list[1][i][2]])
+		row2.append(list[1][i][0])
+
+	# Affichage avec matplotlib
+	fig, ax=plt.subplots()
+	ax.set_axis_off()
+	table=ax.table(
+		cellText=val,
+		rowLabels=row,
+		colLabels=['nombre', 'pourcentage'],
+		cellLoc='center',
+		loc='upper left'
+		)
+
+	table2=ax.table(
+		cellText=val2,
+		rowLabels=row2,
+		colLabels=['nombre', 'pourcentage'],
+		cellLoc='center',
+		loc='lower left'
+		)
+	ax.set_title("Comparaison Dijkstra et Blowfish")
+	plt.show()
+
+main()

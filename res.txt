@@ -7,7 +7,7 @@ of SimpleScalar, LLC (info@simplescalar.com).
 
 sim: command line: sim-profile -redir:sim res.txt -iclass true blowfish/blowfish/bf.ss e input_small.asc output.out 
 
-sim: simulation started @ Wed Feb 23 11:59:28 2022, options follow:
+sim: simulation started @ Wed Feb 23 23:24:39 2022, options follow:
 
 sim-profile: This simulator implements a functional simulator with
 profiling support.  Run with the `-h' flag to see profiling options
@@ -77,9 +77,9 @@ ld_stack_size                 16384 # program initial stack size
 ld_prog_entry            0x00400140 # program entry point (initial PC)
 ld_environ_base          0x7fff8000 # program environment base address address
 ld_target_big_endian              0 # target executable endian-ness, non-zero if big endian
-mem.page_count                   32 # total number of pages allocated
-mem.page_mem                   128k # total size of memory pages allocated
-mem.ptab_misses                  34 # total first level page table misses
-mem.ptab_accesses         171354734 # total page table accesses
+mem.page_count                   33 # total number of pages allocated
+mem.page_mem                   132k # total size of memory pages allocated
+mem.ptab_misses                  35 # total first level page table misses
+mem.ptab_accesses         171355170 # total page table accesses
 mem.ptab_miss_rate           0.0000 # first level page table miss rate
 
