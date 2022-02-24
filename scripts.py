@@ -20,9 +20,10 @@ def export_all_instructions(file_path, export_path):
 	sp.run('grep ' + '\"trap   \"' + ' ' + file_path + '>>' + export_path, shell=True)
 
 def clean_file(file_path):
-	f = open(file_path, 'w')
-	f.truncate(0)
-	f.close()
+	if(os.path.exists(file_path)):
+		f = open(file_path, 'w')
+		f.truncate(0)
+		f.close()
 
 def append_to_file(file_path, to_write):
 	with open(file_path, 'a') as f:
@@ -44,10 +45,17 @@ def file_to_list(file_path):
 	file.close()
 	return final_res
 
+def sim_outorder(program_path, export_path, args):
+	sp.run('sim-outorder ' + args + ' -redir:sim ' + export_path + ' ' + program_path, shell=True)
+
+def sim_outorder(program_path, export_path, nsets, bsize, cache):
+	sp.run('sim-outorder ' + ' -cache:'+ cache +' ' + cache + ':' + str(nsets) + ':' + str(bsize) + ':1:l' + ' -redir:sim ' 
+		+ export_path + ' ' + program_path, shell=True)
+
 def main():
 	#Partie 1
-	OUTPUT_FILE="res.txt"
-	EXPORT_FILE="export.txt"
+	OUTPUT_FILE="res/res.txt"
+	EXPORT_FILE="res/export.txt"
 	clean_file(EXPORT_FILE)
 
 	options='-redir:sim ' + ' \"'+OUTPUT_FILE+'\" ' + '-iclass true'
@@ -106,5 +114,11 @@ def main():
 		)
 	ax.set_title("Comparaison Dijkstra et Blowfish")
 	plt.show()
+
+	nsets=[1024, 2048, 4096, 8192, 16384]
+	bsize=32
+	for nset in nsets:
+		sim_outorder('dijkstra/dijkstra_small.ss input_dat', 'res/res_sim_outorder' + '_dl1_' + str(nset) + '.txt', nset, bsize, 'dl1')
+
 
 main()

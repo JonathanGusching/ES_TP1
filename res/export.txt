@@ -1,0 +1,16 @@
+load                1680829  24.13 
+store                720954  10.35 
+uncond branch         74600   1.07 
+cond branch         1023088  14.69 
+int computation     3466540  49.76 
+fp computation            0   0.00 
+trap                     70   0.00 
+1
+load                7875164  21.24 
+store               2770533   7.47 
+uncond branch       1079330   2.91 
+cond branch         3516483   9.48 
+int computation    21832872  58.89 
+fp computation            0   0.00 
+trap                    174   0.00 
+2
