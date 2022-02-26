@@ -6,6 +6,14 @@ import re #RegEx
 def sim_instructions(file_path, arguments='', options=''):
 	sp.run('sim-profile ' + options  + ' ' + file_path + ' ' + arguments , shell=True)
 
+def blowfish(size, key, options):
+	if(size==1):
+		sp.run('sim-profile ' + options + ' blowfish/blowfish/bf.ss e input_small.asc output_small.out ' + str(key) , shell=True)
+	elif(size==2):
+		sp.run('sim-profile ' + options + ' blowfish/blowfish/bf.ss e input_medium.asc output_medium.out ' + str(key) , shell=True)
+	elif(size==3):
+		sp.run('sim-profile ' + options +' blowfish/blowfish/bf.ss e input_large.asc output_large.out ' + str(key) , shell=True)
+
 def export_arguments(file_path, export_path, argument):
 	sp.run('grep ' + argument + ' ' + file_path + '>>' + export_path, shell=True)
 
@@ -36,21 +44,66 @@ def file_to_list(file_path):
 	result=[]
 	cpt=0
 	for line in lines:
+		new_line=line.split("#", -1)[0]
 		if(line.isnumeric()):
 			cpt=cpt+1
 			final_res.append(result)
 			result=[]
 		else:
-			result.append(re.split(r" {2,}", line))
+			result.append(re.split(r" {2,}", new_line))
 	file.close()
 	return final_res
 
 def sim_outorder(program_path, export_path, args):
 	sp.run('sim-outorder ' + args + ' -redir:sim ' + export_path + ' ' + program_path, shell=True)
 
-def sim_outorder(program_path, export_path, nsets, bsize, cache):
-	sp.run('sim-outorder ' + ' -cache:'+ cache +' ' + cache + ':' + str(nsets) + ':' + str(bsize) + ':1:l' + ' -redir:sim ' 
+def sim_cache(program_path, export_path, nsets, bsize, assoc, cache, options):
+	'''
+	nsets=nombre d'ensembles du cache
+	bsize=taille du bloc
+	assoc=associativité
+	cache = dl1 ou il1
+	'''
+	sp.run('sim-outorder ' + ' -cache:'+ cache +' ' + cache + ':' + str(nsets) + ':' + str(bsize) + ':' + str(assoc) + ':l ' + options + ' -redir:sim ' 
 		+ export_path + ' ' + program_path, shell=True)
+
+def sim_cpu(cpu_name):
+	if(cpu_name=='a15'):
+		nsets=[16, 32, 64, 128, 256]
+		bsize=64
+		assoc=2
+		sim_cycle=[]
+		ipc=[]
+		list=[]
+		for nset in nsets:
+			file_path='res/res_sim_outorder' + 'l1_' + str(nset*bsize*assoc) + '.txt'
+			
+			clean_file(file_path)
+
+			instruc_l1_str='-cache:il1 il1:' + str(nset) + ':' + str(bsize) + ':' + str(assoc) + ':l '
+			args='-bpred \"2lev\" -bpred:btb 256 1 -decode:width 4 -issue:width 8 -commit:width 4 -fetch:ifqsize 8 -ruu:size 16 -lsq:size 16 -res:ialu 5 -res:fpalu 1 -res:imult 1 -res:fpmult 1 '
+			sim_cache('dijkstra/dijkstra_small.ss input_dat', file_path, nset, bsize, assoc, 'dl1', 
+				args + instruc_l1_str + '-cache:il2 dl2 -cache:dl2 dl2:512:64:16:l')
+			#export all the useful arguments
+			export_arguments(file_path, 'res/'+str(nset)+'.res', 'sim_cycle  ' )
+			export_arguments(file_path, 'res/'+str(nset)+'.res', 'sim_IPC  ' )
+			append_to_file('res/'+str(nset)+'.res', '1')
+
+			print(file_to_list('res/'+str(nset)+'.res')[0][0][1])
+			sim_cycle.append(int(file_to_list('res/'+str(nset)+'.res')[0][0][1]))
+			ipc.append(float(file_to_list('res/'+str(nset)+'.res')[0][1][1]))
+			list.append(file_to_list('res/'+str(nset)+'.res'))
+		
+		x=[nset*bsize*assoc for nset in nsets]
+		plt.plot(x, ipc)
+		plt.title("Cortex A15 ipc en fonction de la mémoire L1")
+		plt.show()
+
+		plt.plot(x, sim_cycle)
+		plt.title("Cortex A15 sim_cycle en fonction de la mémoire L1")
+		plt.show()
+		print(list)
+
 
 def main():
 	#Partie 1
@@ -58,7 +111,7 @@ def main():
 	EXPORT_FILE="res/export.txt"
 	clean_file(EXPORT_FILE)
 
-	options='-redir:sim ' + ' \"'+OUTPUT_FILE+'\" ' + '-iclass true'
+	options='-redir:sim ' + '\"'+OUTPUT_FILE+'\" ' + '-iclass true '
 
 	''' SIMULER DIJKSTRA '''
 	sim_instructions('dijkstra/dijkstra_small.ss', 'input_dat', options)
@@ -68,8 +121,9 @@ def main():
 	export_all_instructions(OUTPUT_FILE, EXPORT_FILE)
 
 	''' SIMULER BLOWFISH '''
-	sim_instructions('blowfish/blowfish/bf.ss', 'e input_small.asc output.out', options)
-	
+	#sim_instructions('blowfish/blowfish/bf.ss', 'e input_medium.asc output_medium.out 1234567890123456789', options)
+	blowfish(1, 1234567890, options)
+
 	#export_arguments("res.txt", "test", '\"load   \"')
 
 	append_to_file(EXPORT_FILE, '1') # pour séparer les résultats entre eux
@@ -115,10 +169,8 @@ def main():
 	ax.set_title("Comparaison Dijkstra et Blowfish")
 	plt.show()
 
-	nsets=[1024, 2048, 4096, 8192, 16384]
-	bsize=32
-	for nset in nsets:
-		sim_outorder('dijkstra/dijkstra_small.ss input_dat', 'res/res_sim_outorder' + '_dl1_' + str(nset) + '.txt', nset, bsize, 'dl1')
+	sim_cpu('a15')
+		
 
 
 main()
