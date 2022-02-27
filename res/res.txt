@@ -7,7 +7,7 @@ of SimpleScalar, LLC (info@simplescalar.com).
 
 sim: command line: sim-profile -redir:sim res/res.txt -iclass true blowfish/blowfish/bf.ss e input_small.asc output_small.out 1234567890 
 
-sim: simulation started @ Sat Feb 26 19:29:14 2022, options follow:
+sim: simulation started @ Sun Feb 27 17:59:05 2022, options follow:
 
 sim-profile: This simulator implements a functional simulator with
 profiling support.  Run with the `-h' flag to see profiling options
@@ -43,8 +43,8 @@ sim: ** starting functional simulation **
 sim: ** simulation statistics **
 sim_num_insn               37074832 # total number of instructions executed
 sim_num_refs               10645732 # total number of loads and stores executed
-sim_elapsed_time                  1 # total simulation time in seconds
-sim_inst_rate          37074832.0000 # simulation speed (in insts/sec)
+sim_elapsed_time                  2 # total simulation time in seconds
+sim_inst_rate          18537416.0000 # simulation speed (in insts/sec)
 
 sim_inst_class_prof    # instruction class profile
 sim_inst_class_prof.array_size = 7
